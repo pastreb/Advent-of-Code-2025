@@ -8,15 +8,6 @@ def read_input(input_file_name):
         lines = f.readlines()
         return lines
 
-
-class Dummy:
-    def __init__(self):
-        self.dummy = 0
-
-    def setup(self, input):
-        for set in re.findall(r"[^;]+", input):
-            pass
-
 # --- Day 2: Gift Shop ---
 
 # You get inside and take the elevator to its only other stop: the gift shop. 
