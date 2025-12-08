@@ -1,8 +1,7 @@
 import os.path
 import re
-
 from math import sqrt
-
+from functools import reduce
 
 def read_input(input_file_name):
     input_file = os.path.join(os.path.dirname(__file__), input_file_name)
@@ -98,28 +97,77 @@ class JunctionBox:
     def __init__(self, position):
         self.position = position
         self.circuit = set([self])
-    
+   
     def get_straight_line_distance_to(self, other):
         return sqrt(sum([(self.position[i] - other.position[i])**2 for i in range(len(self.position))]))
-    
+   
     def connect(self, other):
         # Merge the circuits of both junction boxes
         merged_circuit = self.circuit | other.circuit  # Union of both sets
-        self.circuit = merged_circuit
-        other.circuit = merged_circuit
+        for circuit in merged_circuit:
+            circuit.circuit = merged_circuit
 
-def compute_part_1(input_file_name="sample_input.txt"):
+    def get_circuit_representation(self):
+        # Return (circuit_id, size)
+        return (''.join(sorted([''.join(str(x) for x in box.position) for box in self.circuit])), len(self.circuit))
+
+    def print_circuit(self):
+        print(str([box.position for box in self.circuit]))
+       
+def compute_part_1(input_file_name="input.txt"):
     input = read_input(input_file_name)
     boxes = [JunctionBox([int(x) for x in re.findall(r"\d+", line)]) for line in input]
+    distances = {}
+    for i in range(len(boxes)):
+        for j in range(i+1, len(boxes)):
+            distances[(boxes[i], boxes[j])] = boxes[i].get_straight_line_distance_to(boxes[j])
     for i in range(1000):
-        min_dist = 100 
-    return 0
+        box_a, box_b = min(distances, key=distances.get)
+        box_a.connect(box_b)
+        del distances[(box_a, box_b)]
+    largest_circuits = sorted(set([box.get_circuit_representation() for box in boxes]), key=lambda x: x[1], reverse=True)[:3]
+    return reduce(lambda x, y: x * y[1], largest_circuits, 1)
 
+# 171503
+# That's the right answer! You are one gold star closer to decorating the 
+# North Pole.
+
+# --- Part Two ---
+
+# The Elves were right; they definitely don't have enough extension cables. 
+# You'll need to keep connecting junction boxes together until they're all in 
+# one large circuit.
+
+# Continuing the above example, the first connection which causes all of the 
+# junction boxes to form a single circuit is between the junction boxes at 
+# 216,146,977 and 117,168,530. The Elves need to know how far those junction 
+# boxes are from the wall so they can pick the right extension cable; 
+# multiplying the X coordinates of those two junction boxes (216 and 117) 
+# produces 25272.
+
+# Continue connecting the closest unconnected pairs of junction boxes 
+# together until they're all in the same circuit. What do you get if you 
+# multiply together the X coordinates of the last two junction boxes you need 
+# to connect?
 
 def compute_part_2(input_file_name="input.txt"):
     input = read_input(input_file_name)
-    return 0
+    boxes = [JunctionBox([int(x) for x in re.findall(r"\d+", line)]) for line in input]
+    distances = {}
+    for i in range(len(boxes)):
+        for j in range(i+1, len(boxes)):
+            distances[(boxes[i], boxes[j])] = boxes[i].get_straight_line_distance_to(boxes[j])
+    while True:
+        box_a, box_b = min(distances, key=distances.get)
+        box_a.connect(box_b)
+        del distances[(box_a, box_b)]
+        # print(f"Circuit Size: {box_a.get_circuit_representation()[1]}/{len(boxes)}")
+        if box_a.get_circuit_representation()[1] == len(boxes):
+            return box_a.position[0]*box_b.position[0]
 
+# 9069509600
+# That's the right answer! You are one gold star closer to decorating the 
+# North Pole.
 
 if __name__ == "__main__":
     print(f"PART 1: {compute_part_1()}")
